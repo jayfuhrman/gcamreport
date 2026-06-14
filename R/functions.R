@@ -2899,16 +2899,14 @@ get_land <- function(GCAM_version = "v7.1") {
   value <- unit_conv <- scenario <- region <- year <- var <- land_clean <- land_yield <- landleaf <- NULL
 
   check_queries("land_clean", GCAM_version)
-  cereal_scalar <- get(paste('cereal_scaler',GCAM_version,sep='_'), envir = asNamespace("gcamreport"))
+  cereal_scalar <- get(paste('cereal_scaler',GCAM_version,sep='_'))
+  land_filter <- get(paste('land_use_map',GCAM_version,sep='_'), envir = asNamespace("gcamreport"))
 
   land_tmp <-
     check_inf(rgcam::getQuery(prj, "land allocation by crop and water source"),
               dataset_name = "land allocation by crop and water source") %>%
-    mutate(water = if_else(is.na(water),
-                           sub("_.*$", "", sub("^(?:[^_]*_){2}", "", crop)), 
-                           water),
-           water = if_else(water == crop, "NA",water)
-    ) %>%
+    dplyr::filter(crop %in% land_filter$crop) %>%
+    dplyr::mutate(water = dplyr::if_else(water == crop, NA_character_,water)) %>%
     left_join_strict(get(paste('land_use_map',GCAM_version,sep='_'), envir = asNamespace("gcamreport")),
                      by = c("crop","water"), mapping = paste('land_use_map',GCAM_version,sep='_'), multiple = "all", relationship = "many-to-many") %>%
     dplyr::filter(var != 'NoReported', !is.na(var)) %>%

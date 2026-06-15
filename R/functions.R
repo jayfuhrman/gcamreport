@@ -5813,24 +5813,24 @@ do_bind_results <- function(GCAM_version = "v7.1", all_tier1 = F) {
 #' @importFrom magrittr %>%
 #' @export
 do_check_inf <- function(GCAM_version = "v7.1") {
-  # Check vetting results from SM
+  
+  year_cols <- names(report)[grepl("^\\d{4}$", names(report))]  # "2005","2010",...
+  
   report_inf_summary <- report %>%
-    dplyr::filter(dplyr::if_any(`2005`:dplyr::last_col(), ~ is.infinite(.)))
-
-  # output
+    dplyr::filter(
+      dplyr::if_any(dplyr::all_of(year_cols), ~{
+        x <- .
+        if (is.list(x)) x <- unlist(x, recursive = TRUE, use.names = FALSE)
+        x <- suppressWarnings(as.numeric(x))
+        any(is.infinite(x), na.rm = TRUE)
+      })
+    )
+  
   if (nrow(report_inf_summary) == 0) {
-    res <- list(
-      message = "Inf variables: OK",
-      summary = report_inf_summary
-    )
+    list(message = "Inf variables: OK", summary = report_inf_summary)
   } else {
-    res <- list(
-      message = "Inf variables: ERROR",
-      summary = as.data.frame(report_inf_summary)
-    )
+    list(message = "Inf variables: ERROR", summary = as.data.frame(report_inf_summary))
   }
-  return(res)
-
 }
 
 

@@ -823,8 +823,11 @@ generate_report <- function(db_path = NULL, db_name = NULL, prj_name, scenarios 
   # bind and save results
   do_bind_results(GCAM_version, all_tier1)
   save(report, file = paste0(output_file, ".RData"))
-
   if (save_output == TRUE || save_output %in% c("CSV", "XLSX")) {
+      is_listcol <- vapply(report, is.list, logical(1))
+      report[is_listcol] <- lapply(report[is_listcol], function(col) {
+        vapply(col, function(x) paste(x, collapse = ";"), character(1))
+    })
     if (save_output == TRUE || "CSV" %in% save_output) {
       write.csv(report, file.path(paste0(output_file, ".csv")), row.names = FALSE)
       rlang::inform(paste0("Standardized dataset saved in ",file.path(paste0(output_file, ".csv"))))
